@@ -27,6 +27,48 @@ class ModelingTest(unittest.TestCase):
         cyl = m.make_cylinder(5, 10, doc=self.doc)
         self.assertAlmostEqual(m.shape_volume(cyl), math.pi * 25 * 10, places=4)
 
+    def test_sphere_volume(self) -> None:
+        sphere = m.make_sphere(3, doc=self.doc)
+        self.assertAlmostEqual(m.shape_volume(sphere), 4 / 3 * math.pi * 27, places=4)
+
+    def test_cone_volume(self) -> None:
+        cone = m.make_cone(5, 0, 10, doc=self.doc)
+        self.assertAlmostEqual(m.shape_volume(cone), math.pi * 25 * 10 / 3, places=4)
+
+    def test_fuse_volume(self) -> None:
+        import FreeCAD as App
+
+        a = m.make_box(10, 10, 10, name="A", doc=self.doc)
+        b = m.make_box(10, 10, 10, name="B", doc=self.doc)
+        b.Placement = App.Placement(App.Vector(10, 0, 0), App.Rotation())
+        fused = m.fuse(a, b)
+        self.assertAlmostEqual(m.shape_volume(fused), 2000, places=6)
+
+    def test_common_volume(self) -> None:
+        import FreeCAD as App
+
+        a = m.make_box(10, 10, 10, name="A", doc=self.doc)
+        b = m.make_box(10, 10, 10, name="B", doc=self.doc)
+        b.Placement = App.Placement(App.Vector(5, 0, 0), App.Rotation())
+        inter = m.common(a, b)
+        self.assertAlmostEqual(m.shape_volume(inter), 500, places=6)
+
+    def test_fillet_reduces_volume(self) -> None:
+        box = m.make_box(40, 40, 40, doc=self.doc)
+        before = m.shape_volume(box)
+        rounded = m.fillet(box, 5)
+        after = m.shape_volume(rounded)
+        self.assertGreater(before, after)
+        self.assertGreater(after, 0)
+
+    def test_chamfer_reduces_volume(self) -> None:
+        box = m.make_box(40, 40, 40, doc=self.doc)
+        before = m.shape_volume(box)
+        beveled = m.chamfer(box, 5)
+        after = m.shape_volume(beveled)
+        self.assertGreater(before, after)
+        self.assertGreater(after, 0)
+
     def test_cut_creates_hole(self) -> None:
         import FreeCAD as App
 

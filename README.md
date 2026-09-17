@@ -39,19 +39,22 @@ The test suite runs inside FreeCAD's bundled Python (no separate env needed):
 "C:\Program Files\FreeCAD 1.0\bin\freecadcmd.exe" tests\run_tests.py
 ```
 
-Covers: volume math (box / cylinder / boolean cut), bounding boxes, STL/STEP
-export, FCStd save, and the AI tool executor (`agent.py`).
+Covers: volume math (box / cylinder / sphere / cone / boolean ops), bounding
+boxes, fillet/chamfer, STL/STEP export, FCStd save, the AI tool executor, and
+the full agent loop (offline, scripted LLM client).
 
 ## Project layout
 
 ```
 freecad-ai/
 ├── src/freecad_ai/        # reusable package
-│   ├── modeling.py        # headless Part-based API: box/cylinder/cut/export/query
-│   └── agent.py           # LLM tool registry + executor (function-calling format)
+│   ├── modeling.py        # headless Part-based API: box/cylinder/sphere/cone/cut/fuse/...
+│   ├── agent.py           # LLM tool registry + full agent loop
+│   └── llm.py             # zero-dependency OpenAI-compatible chat client
 ├── examples/              # runnable scripts
 │   ├── hello_freecad.py   # minimal box -> STL
-│   └── parametric_part.py # plate with centered hole (boolean cut, STEP/FCStd)
+│   ├── parametric_part.py # plate with centered hole (boolean cut, STEP/FCStd)
+│   └── llm_modeling.py    # natural language -> model via LLM agent
 ├── tests/                 # unittest suite, run via tests/run_tests.py
 ├── requirements.txt       # python deps outside FreeCAD itself
 └── README.md
@@ -61,16 +64,30 @@ freecad-ai/
 
 ```python
 from freecad_ai.agent import FreeCADAgent
+from freecad_ai.llm import ChatClient
 
 agent = FreeCADAgent()
 print(agent.describe())  # tool list in LLM function-calling format
 
-# Execute a tool call as emitted by an LLM:
+# 1) Execute a tool call directly (no LLM):
 agent.execute({"tool": "make_box", "arguments": {"length": 10, "width": 20, "height": 30}})
+
+# 2) Full agent loop: instruction -> LLM tool call(s) -> FreeCAD model
+#    Configure via env: OPENAI_API_KEY (required), OPENAI_BASE_URL, OPENAI_MODEL
+result = agent.run("Create a plate 60 by 40 by 8 mm with a centered hole of radius 10 mm",
+                   client=ChatClient())
+print(result)  # {"finish_reason", "steps": [...], "reply": "..."}
 ```
 
-Wire a real LLM backend by implementing `FreeCADAgent.run()` — the
-scaffolding and tool schema are in place, the model call is the missing piece.
+The `ChatClient` speaks the OpenAI Chat Completions protocol with **no
+third-party dependencies** (stdlib only) — OpenAI, DeepSeek, Moonshot, Qwen,
+Groq, and local servers (vLLM / Ollama OpenAI-mode) all work by setting
+`OPENAI_BASE_URL` / `OPENAI_MODEL`. A live demo:
+
+```bat
+set OPENAI_API_KEY=sk-...
+"C:\Program Files\FreeCAD 1.0\bin\freecadcmd.exe" examples\llm_modeling.py
+```
 
 ## Roadmap (draft)
 

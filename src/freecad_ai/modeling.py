@@ -59,6 +59,100 @@ def make_cylinder(
     return cyl
 
 
+def make_sphere(
+    radius: float,
+    name: str = "Sphere",
+    doc: App.Document | None = None,
+) -> Part.Feature:
+    """Create a parametric sphere feature."""
+    if doc is None:
+        doc = new_document()
+    sphere = doc.addObject("Part::Sphere", name)
+    sphere.Radius = float(radius)
+    doc.recompute()
+    return sphere
+
+
+def make_cone(
+    radius1: float,
+    radius2: float,
+    height: float,
+    name: str = "Cone",
+    doc: App.Document | None = None,
+) -> Part.Feature:
+    """Create a parametric cone/truncated-cone feature."""
+    if doc is None:
+        doc = new_document()
+    cone = doc.addObject("Part::Cone", name)
+    cone.Radius1 = float(radius1)
+    cone.Radius2 = float(radius2)
+    cone.Height = float(height)
+    doc.recompute()
+    return cone
+
+
+def fuse(body: Part.Feature, tool: Part.Feature, name: str = "Fusion") -> Part.Feature:
+    """Boolean-union `body` with `tool`."""
+    doc = body.Document
+    fusion = doc.addObject("Part::Fuse", name)
+    fusion.Base = body
+    fusion.Tool = tool
+    doc.recompute()
+    return fusion
+
+
+def common(body: Part.Feature, tool: Part.Feature, name: str = "Common") -> Part.Feature:
+    """Boolean-intersection of `body` and `tool`."""
+    doc = body.Document
+    inter = doc.addObject("Part::Common", name)
+    inter.Base = body
+    inter.Tool = tool
+    doc.recompute()
+    return inter
+
+
+def fillet(
+    base: Part.Feature,
+    radius: float,
+    edges: list[Part.Edge] | None = None,
+    name: str = "Fillet",
+) -> Part.Feature:
+    """Round all (or the given) edges of ``base``'s shape.
+
+    Implemented with ``TopoShape.makeFillet`` (the ``Part::Fillet`` feature's
+    ``Edges`` property is unreliable to assign in headless mode). Returns a
+    non-parametric ``Part::Feature``; to change parameters, re-run the call
+    and rebuild the downstream features.
+    """
+    shape = base.Shape
+    new_shape = shape.makeFillet(float(radius), edges or list(shape.Edges))
+    doc = base.Document
+    feat = doc.addObject("Part::Feature", name)
+    feat.Shape = new_shape
+    doc.recompute()
+    return feat
+
+
+def chamfer(
+    base: Part.Feature,
+    size: float,
+    edges: list[Part.Edge] | None = None,
+    name: str = "Chamfer",
+) -> Part.Feature:
+    """Bevel all (or the given) edges of ``base``'s shape.
+
+    Implemented with ``TopoShape.makeChamfer`` (see ``fillet`` for why).
+    Returns a non-parametric ``Part::Feature``.
+    """
+    shape = base.Shape
+    new_shape = shape.makeChamfer(float(size), edges or list(shape.Edges))
+    doc = base.Document
+    feat = doc.addObject("Part::Feature", name)
+    feat.Shape = new_shape
+    doc.recompute()
+    return feat
+
+
 def cut(body: Part.Feature, tool: Part.Feature, name: str = "Cut") -> Part.Feature:
     """Boolean-subtract `tool` from `body` (classic hole/plate workflow)."""
     doc = body.Document

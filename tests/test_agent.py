@@ -46,8 +46,10 @@ class AgentTest(unittest.TestCase):
         with self.assertRaises(ToolCallError):
             self.agent.execute({"tool": "make_box", "arguments": "not json"})
 
-    def test_run_needs_llm_backend(self) -> None:
-        with self.assertRaises(NotImplementedError):
+    def test_run_without_key_raises_clear_error(self) -> None:
+        from freecad_ai.llm import LLMError
+
+        with self.assertRaises(LLMError):
             self.agent.run("make a box 10 by 20 by 30")
 
 
