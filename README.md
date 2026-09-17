@@ -31,15 +31,46 @@ FreeCAD Version: ['1', '0', '2', ...]
 STL exported: examples/output/hello_freecad.stl
 ```
 
+## Tests
+
+The test suite runs inside FreeCAD's bundled Python (no separate env needed):
+
+```bat
+"C:\Program Files\FreeCAD 1.0\bin\freecadcmd.exe" tests\run_tests.py
+```
+
+Covers: volume math (box / cylinder / boolean cut), bounding boxes, STL/STEP
+export, FCStd save, and the AI tool executor (`agent.py`).
+
 ## Project layout
 
 ```
 freecad-ai/
-├── src/freecad_ai/        # reusable package (importable once added to PYTHONPATH)
+├── src/freecad_ai/        # reusable package
+│   ├── modeling.py        # headless Part-based API: box/cylinder/cut/export/query
+│   └── agent.py           # LLM tool registry + executor (function-calling format)
 ├── examples/              # runnable scripts
+│   ├── hello_freecad.py   # minimal box -> STL
+│   └── parametric_part.py # plate with centered hole (boolean cut, STEP/FCStd)
+├── tests/                 # unittest suite, run via tests/run_tests.py
 ├── requirements.txt       # python deps outside FreeCAD itself
 └── README.md
 ```
+
+## AI usage
+
+```python
+from freecad_ai.agent import FreeCADAgent
+
+agent = FreeCADAgent()
+print(agent.describe())  # tool list in LLM function-calling format
+
+# Execute a tool call as emitted by an LLM:
+agent.execute({"tool": "make_box", "arguments": {"length": 10, "width": 20, "height": 30}})
+```
+
+Wire a real LLM backend by implementing `FreeCADAgent.run()` — the
+scaffolding and tool schema are in place, the model call is the missing piece.
 
 ## Roadmap (draft)
 
