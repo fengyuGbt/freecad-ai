@@ -13,9 +13,11 @@ from .modeling import (  # noqa: F401
     make_cone,
     make_cylinder,
     make_sphere,
+    move,
     new_document,
     save_document,
+    set_position,
     shape_volume,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

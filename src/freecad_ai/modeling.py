@@ -27,16 +27,20 @@ def make_box(
     length: float,
     width: float,
     height: float,
+    x: float = 0.0,
+    y: float = 0.0,
+    z: float = 0.0,
     name: str = "Box",
     doc: App.Document | None = None,
 ) -> Part.Feature:
-    """Create a parametric box feature (mm units)."""
+    """Create a parametric box feature (mm units) with its base corner at (x, y, z)."""
     if doc is None:
         doc = new_document()
     box = doc.addObject("Part::Box", name)
     box.Length = float(length)
     box.Width = float(width)
     box.Height = float(height)
+    box.Placement = App.Placement(App.Vector(x, y, z), App.Rotation())
     doc.recompute()
     return box
 
@@ -45,30 +49,38 @@ def make_cylinder(
     radius: float,
     height: float,
     angle: float = 360.0,
+    x: float = 0.0,
+    y: float = 0.0,
+    z: float = 0.0,
     name: str = "Cylinder",
     doc: App.Document | None = None,
 ) -> Part.Feature:
-    """Create a parametric cylinder feature."""
+    """Create a parametric cylinder feature; (x, y, z) is its base-center position."""
     if doc is None:
         doc = new_document()
     cyl = doc.addObject("Part::Cylinder", name)
     cyl.Radius = float(radius)
     cyl.Height = float(height)
     cyl.Angle = float(angle)
+    cyl.Placement = App.Placement(App.Vector(x, y, z), App.Rotation())
     doc.recompute()
     return cyl
 
 
 def make_sphere(
     radius: float,
+    x: float = 0.0,
+    y: float = 0.0,
+    z: float = 0.0,
     name: str = "Sphere",
     doc: App.Document | None = None,
 ) -> Part.Feature:
-    """Create a parametric sphere feature."""
+    """Create a parametric sphere feature centered at (x, y, z)."""
     if doc is None:
         doc = new_document()
     sphere = doc.addObject("Part::Sphere", name)
     sphere.Radius = float(radius)
+    sphere.Placement = App.Placement(App.Vector(x, y, z), App.Rotation())
     doc.recompute()
     return sphere
 
@@ -77,16 +89,20 @@ def make_cone(
     radius1: float,
     radius2: float,
     height: float,
+    x: float = 0.0,
+    y: float = 0.0,
+    z: float = 0.0,
     name: str = "Cone",
     doc: App.Document | None = None,
 ) -> Part.Feature:
-    """Create a parametric cone/truncated-cone feature."""
+    """Create a parametric cone/truncated-cone feature with base-center at (x, y, z)."""
     if doc is None:
         doc = new_document()
     cone = doc.addObject("Part::Cone", name)
     cone.Radius1 = float(radius1)
     cone.Radius2 = float(radius2)
     cone.Height = float(height)
+    cone.Placement = App.Placement(App.Vector(x, y, z), App.Rotation())
     doc.recompute()
     return cone
 
@@ -161,6 +177,37 @@ def cut(body: Part.Feature, tool: Part.Feature, name: str = "Cut") -> Part.Featu
     cut.Tool = tool
     doc.recompute()
     return cut
+
+
+def move(
+    feature: Part.Feature,
+    dx: float = 0.0,
+    dy: float = 0.0,
+    dz: float = 0.0,
+) -> Part.Feature:
+    """Translate `feature` by (dx, dy, dz) relative to its current position."""
+    base = feature.Placement.Base
+    feature.Placement = App.Placement(
+        App.Vector(base.x + dx, base.y + dy, base.z + dz),
+        feature.Placement.Rotation,
+    )
+    feature.Document.recompute()
+    return feature
+
+
+def set_position(
+    feature: Part.Feature,
+    x: float = 0.0,
+    y: float = 0.0,
+    z: float = 0.0,
+) -> Part.Feature:
+    """Set the absolute position (placement base point) of `feature`."""
+    feature.Placement = App.Placement(
+        App.Vector(x, y, z),
+        feature.Placement.Rotation,
+    )
+    feature.Document.recompute()
+    return feature
 
 
 def shape_volume(feature: Part.Feature) -> float:
