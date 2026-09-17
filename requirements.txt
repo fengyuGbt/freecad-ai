@@ -1,0 +1,3 @@
+# Dependencies outside the FreeCAD-bundled Python environment.
+# FreeCAD itself is installed separately (conda or official installer).
+numpy>=1.26

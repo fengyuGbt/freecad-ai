@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# FreeCAD
+*.FCStd
+*.FCStd1
+*.FCBak
+examples/output/
+
+# AI / agent
+.agent/
+.ai/
+.copilot/
+.claude/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Data
+*.log
+*.tmp
