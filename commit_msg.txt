@@ -1,9 +1,0 @@
-feat: integrate Curves workbench with AI agent; add third-party module research
-
-- examples/ai_curves_surface.py: LLM drives Curves workbench (Gordon B-spline
-  surface) via semantic tool make_panel_surface; verified with GLM-4-Flash
-- docs/freecad-modules-ai-research.md: survey of FreeCAD vs CATIA gaps,
-  third-party workbenches (Curves/Silk/A2plus/Assembly3/Assembly4), FreeCAD
-  MCP AI ecosystem, live experiment records (incl. headless import gotchas)
-- README: document the integration pattern "LLM gives intent, framework
-  gives geometry"; update layout and roadmap
