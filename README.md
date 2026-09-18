@@ -54,7 +54,10 @@ freecad-ai/
 ├── examples/              # runnable scripts
 │   ├── hello_freecad.py   # minimal box -> STL
 │   ├── parametric_part.py # plate with centered hole (boolean cut, STEP/FCStd)
-│   └── llm_modeling.py    # natural language -> model via LLM agent
+│   ├── llm_modeling.py    # natural language -> model via LLM agent
+│   └── ai_curves_surface.py  # LLM drives the Curves workbench (Gordon surface)
+├── docs/
+│   └── freecad-modules-ai-research.md  # third-party modules + AI survey
 ├── tests/                 # unittest suite, run via tests/run_tests.py
 ├── requirements.txt       # python deps outside FreeCAD itself
 └── README.md
@@ -81,8 +84,61 @@ print(result)  # {"finish_reason", "steps": [...], "reply": "..."}
 
 The `ChatClient` speaks the OpenAI Chat Completions protocol with **no
 third-party dependencies** (stdlib only) — OpenAI, DeepSeek, Moonshot, Qwen,
-Groq, and local servers (vLLM / Ollama OpenAI-mode) all work by setting
-`OPENAI_BASE_URL` / `OPENAI_MODEL`. A live demo:
+Groq, Zhipu (GLM), and local servers (vLLM / Ollama OpenAI-mode) all work by
+setting `OPENAI_BASE_URL` / `OPENAI_MODEL`.
+
+### Zhipu GLM-4-Flash (free) — verified end-to-end
+
+```bat
+set OPENAI_API_KEY=<your zhipu key>        &  :: id.secret format
+set OPENAI_BASE_URL=https://open.bigmodel.cn/api/paas/v4
+set OPENAI_MODEL=glm-4-flash
+"C:\Program Files\FreeCAD 1.0\bin\freecadcmd.exe" examples\llm_modeling.py
+```
+
+Verified live on a remote desktop (FreeCAD 1.0.2): the agent created a
+60x40x8 plate, drilled a centered r=10 hole, and the final volume matched the
+theoretical value (16686.726 mm^3) after the self-correction loop.
+
+### Reliability features for LLM-driven CAD
+
+- **Object reference by name**: the model can pass `body='plate'`; names are
+  resolved to real FreeCAD objects automatically.
+- **Type coercion**: string numbers (`'30'`) are converted per parameter
+  annotation — LLMs emit strings all the time.
+- **Geometry quality feedback**: after each `cut`, the agent checks how much
+  of the tool volume was actually removed; if the tool was not fully inside
+  the body (e.g. uncentered hole), it feeds the model the exact body/tool
+  centers and the required `move` call so it can self-correct.
+- **Postponed-annotation support**: works with `from __future__ import
+  annotations` (PEP 563) modules.
+
+### Third-party module integration — Curves workbench (verified)
+
+FreeCAD's built-in surfacing is basic; the [Curves workbench](https://github.com/tomate44/CurvesWB)
+(Gordon surfaces, sweep-2-rails, zebra analysis) closes part of the gap to
+commercial Class-A tooling and is fully scriptable headlessly.
+
+```bat
+rem install: unzip CurvesWB into <user>\AppData\Roaming\FreeCAD\Mod\Curves
+rem NOTE: the import name is CASE-SENSITIVE in headless FreeCAD 1.0.2:
+"C:\Program Files\FreeCAD 1.0\bin\freecadcmd.exe" examples\ai_curves_surface.py
+```
+
+Verified live (GLM-4-Flash, 2026-09-18): the model issued one
+`make_panel_surface(60, 40, 10)` call and the agent built a
+60x40x15.2 mm B-spline arch surface through the Gordon solver, exported STL.
+
+**Pattern — "LLM gives intent, framework gives geometry"**: giving the LLM a
+deeply nested point-network JSON argument failed (GLM-4-Flash repeated the
+same malformed call 7x); a semantic tool with plain numbers works. Keep
+complex geometric data construction inside the framework, not the prompt.
+
+See `docs/freecad-modules-ai-research.md` for the full survey (Curves/Silk/
+CurvedShapes, A2plus/Assembly3/Assembly4, FreeCAD MCP ecosystem, CATIA gap
+analysis).
+
+A live demo:
 
 ```bat
 set OPENAI_API_KEY=sk-...
@@ -91,10 +147,12 @@ set OPENAI_API_KEY=sk-...
 
 ## Roadmap (draft)
 
-- [ ] AI agent that turns natural-language part descriptions into parametric models
+- [x] AI agent that turns natural-language part descriptions into parametric models
+- [x] Third-party module integration (Curves workbench: Gordon surfaces)
 - [ ] Sketch/constraint solver integration for repair and re-parameterization
 - [ ] STEP → STL → mesh pipeline for 3D printing / simulation
 - [ ] Evaluation harness for generated models (geometry validity, dimension accuracy)
+- [ ] Assembly integration experiment (Assembly4 / native Assembly WB)
 
 ## License
 
