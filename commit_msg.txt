@@ -1,0 +1,6 @@
+Add AI-driven active rear spoiler example (XPeng G6 style)
+
+Parametric model: NACA airfoil wing lofted along span + four-bar lift
+mechanism + trunk base with recess. Two states exported (deployed/stowed
+STEP+STL). Semantic params (span/chord/thickness/aoa/rise) are meant to
+come from an LLM tool call; framework builds the geometry.
